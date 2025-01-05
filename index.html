@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Chatbot</title>
+    <title>Hugging Face Chatbot</title>
     <style>
         body {
             font-family: sans-serif;
@@ -87,12 +87,14 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+       document.addEventListener('DOMContentLoaded', function() {
             const chatLog = document.getElementById('chat-log');
             const userInput = document.getElementById('user-input');
             const sendButton = document.getElementById('send-button');
 
-            const API_KEY = "YOUR_API_KEY_HERE"; // Replace with your actual API key !!!
+           const HUGGINGFACE_API_KEY = "YOUR_HUGGING_FACE_API_KEY_HERE"; // Replace with your API key.
+           const HUGGINGFACE_MODEL = "facebook/blenderbot-400M-distill"; // You can choose a different model.
+
 
             // Function to create message element
             function createMessageElement(message, isUser) {
@@ -102,50 +104,45 @@
                 return messageDiv;
             }
 
-             // Function to send a message to the API and get a response
-             async function sendMessageToGemini(message) {
-                // check if api key is present
-                if (API_KEY === "AIzaSyBxEsGDuhb4-j1EAEV5x8HWwGdweQ4iInQ") {
-                    alert("Please replace YOUR_API_KEY_HERE with your API key in script.js to use the chatbot. DO NOT COMMIT THIS VERSION TO GITHUB.")
+
+            async function sendMessageToHuggingFace(message) {
+                if (HUGGINGFACE_API_KEY === "YOUR_HUGGING_FACE_API_KEY_HERE") {
+                alert("Please replace YOUR_HUGGING_FACE_API_KEY_HERE with your API key in script.js to use the chatbot. DO NOT COMMIT THIS VERSION TO GITHUB.");
                     return;
                 }
-            
-                const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
-                const data = {
-                    "contents": [{
-                    "parts": [{
-                        "text": message
-                    }]
-                    }]
+
+                const url = "https://api-inference.huggingface.co/models/" + HUGGINGFACE_MODEL;
+                const headers = {
+                    "Authorization": `Bearer ${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}`,
+                    "Content-Type": "application/json"
                 };
-        
+
+                const data = {
+                    "inputs": message
+                };
+
                 try {
                     const response = await fetch(url, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "x-goog-api-key": API_KEY
-                    },
-                    body: JSON.stringify(data),
+                       method: "POST",
+                        headers: headers,
+                        body: JSON.stringify(data)
                     });
                     if (!response.ok) {
-                    console.error("API Response Error:", response.status, response.statusText);
+                        console.error("API Response Error:", response.status, response.statusText);
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
-                    
-                    const json = await response.json();
-                    console.log("API Response:", json);
-        
-                    // Extracting the text
-                    let botResponse = "No response was generated";
-                    if (json && json.candidates && json.candidates[0] && json.candidates[0].content && json.candidates[0].content.parts && json.candidates[0].content.parts[0] && json.candidates[0].content.parts[0].text){
-                        botResponse = json.candidates[0].content.parts[0].text
+                     const json = await response.json();
+                     console.log("API Response:", json);
+
+                   let botResponse = "No response was generated";
+                   if(json && json.length > 0 && json[0].generated_text) {
+                    botResponse = json[0].generated_text;
                     }
-        
+
                     return botResponse;
                 } catch(error) {
-                    console.error("Error sending message", error);
-                    return "Sorry, I am unable to connect right now. Please try again later."
+                   console.error("Error sending message", error);
+                   return "Sorry, I am unable to connect right now. Please try again later."
                 }
             }
 
@@ -156,15 +153,17 @@
                     chatLog.appendChild(createMessageElement(userMessage, true));
                     userInput.value = '';
 
-                //Get Bot Response
-                const botResponse = await sendMessageToGemini(userMessage);
-                chatLog.appendChild(createMessageElement(botResponse, false));
 
-                chatLog.scrollTop = chatLog.scrollHeight; // Auto-scroll to bottom
+                 //Get Bot Response
+                    const botResponse = await sendMessageToHuggingFace(userMessage);
+                    chatLog.appendChild(createMessageElement(botResponse, false));
+
+
+                    chatLog.scrollTop = chatLog.scrollHeight; // Auto-scroll to bottom
                 }
             });
 
-            // Send message on pressing Enter
+             // Send message on pressing Enter
             userInput.addEventListener('keypress', async function(event) {
                 if (event.key === 'Enter') {
                     sendButton.click();
