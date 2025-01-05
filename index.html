@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Chatbot</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .chat-container {
+            width: 400px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-log {
+            flex-grow: 1;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .user-message {
+            background-color: #e1f5fe;
+            align-self: flex-end;
+        }
+
+        .bot-message {
+            background-color: #f0f0f0;
+            align-self: flex-start;
+        }
+
+        .input-area {
+            display: flex;
+            padding: 10px;
+        }
+
+        #user-input {
+            flex-grow: 1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px;
+            margin-right: 10px;
+        }
+
+        #send-button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+        }
+
+        #send-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div id="chat-log" class="chat-log">
+            <!-- Chat messages will go here -->
+        </div>
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatLog = document.getElementById('chat-log');
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+
+            const API_KEY = "YOUR_API_KEY_HERE"; // Replace with your actual API key !!!
+
+            // Function to create message element
+            function createMessageElement(message, isUser) {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message', isUser ? 'user-message' : 'bot-message');
+                messageDiv.textContent = message;
+                return messageDiv;
+            }
+
+             // Function to send a message to the API and get a response
+             async function sendMessageToGemini(message) {
+                // check if api key is present
+                if (API_KEY === "AIzaSyBxEsGDuhb4-j1EAEV5x8HWwGdweQ4iInQ") {
+                    alert("Please replace YOUR_API_KEY_HERE with your API key in script.js to use the chatbot. DO NOT COMMIT THIS VERSION TO GITHUB.")
+                    return;
+                }
+            
+                const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
+                const data = {
+                    "contents": [{
+                    "parts": [{
+                        "text": message
+                    }]
+                    }]
+                };
+        
+                try {
+                    const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-goog-api-key": API_KEY
+                    },
+                    body: JSON.stringify(data),
+                    });
+                    if (!response.ok) {
+                    console.error("API Response Error:", response.status, response.statusText);
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    
+                    const json = await response.json();
+                    console.log("API Response:", json);
+        
+                    // Extracting the text
+                    let botResponse = "No response was generated";
+                    if (json && json.candidates && json.candidates[0] && json.candidates[0].content && json.candidates[0].content.parts && json.candidates[0].content.parts[0] && json.candidates[0].content.parts[0].text){
+                        botResponse = json.candidates[0].content.parts[0].text
+                    }
+        
+                    return botResponse;
+                } catch(error) {
+                    console.error("Error sending message", error);
+                    return "Sorry, I am unable to connect right now. Please try again later."
+                }
+            }
+
+            // Send button event handler
+            sendButton.addEventListener('click', async function() {
+                const userMessage = userInput.value.trim();
+                if (userMessage) {
+                    chatLog.appendChild(createMessageElement(userMessage, true));
+                    userInput.value = '';
+
+                //Get Bot Response
+                const botResponse = await sendMessageToGemini(userMessage);
+                chatLog.appendChild(createMessageElement(botResponse, false));
+
+                chatLog.scrollTop = chatLog.scrollHeight; // Auto-scroll to bottom
+                }
+            });
+
+            // Send message on pressing Enter
+            userInput.addEventListener('keypress', async function(event) {
+                if (event.key === 'Enter') {
+                    sendButton.click();
+                    event.preventDefault(); //prevent to add newline
+                }
+            });
+        });
+    </script>
+</body>
+</html>
